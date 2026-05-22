@@ -7,9 +7,19 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from nltk.sentiment import SentimentIntensityAnalyzer
 
 from app.config import Settings, get_settings
 from app.transforms import apply_low_rating_override, rating_inverse_transform_inv
+
+# VADER is expensive to initialise (reads lexicon from disk), so cache it once.
+_VADER: SentimentIntensityAnalyzer | None = None
+
+def _get_vader() -> SentimentIntensityAnalyzer:
+    global _VADER
+    if _VADER is None:
+        _VADER = SentimentIntensityAnalyzer()
+    return _VADER
 
 
 class RatingService:
@@ -154,10 +164,9 @@ class RatingService:
         features["caps_intensity"] = min(caps_ratio + excl_bonus + emoji_bonus, 1.0)
 
         title_text = str(features.get("product_name", features.get("text", "")) or "")[:200]
+        sia = _get_vader()
         if title_text.strip():
-            from nltk.sentiment import SentimentIntensityAnalyzer
             try:
-                sia = SentimentIntensityAnalyzer()
                 title_compound = sia.polarity_scores(title_text)["compound"]
                 features["title_compound"] = title_compound
             except Exception:
@@ -169,10 +178,8 @@ class RatingService:
 
         review_text = str(features.get("text", "") or "").lower()
         features["has_but_flag"] = 1.0 if " but " in review_text else 0.0
-        from nltk.sentiment import SentimentIntensityAnalyzer
         try:
-            sia_review = SentimentIntensityAnalyzer()
-            review_compound = sia_review.polarity_scores(review_text)["compound"]
+            review_compound = sia.polarity_scores(review_text)["compound"]
         except Exception:
             review_compound = 0.0
         features["title_review_sentiment_gap"] = abs(title_compound - review_compound)

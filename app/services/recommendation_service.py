@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from app.config import Settings, get_settings
@@ -22,6 +23,9 @@ PRODUCT_FEATURE_DEFAULTS = {
     "text": "",
 }
 
+# How many worker threads to use when scoring products in parallel.
+_N_WORKERS = 8
+
 
 class RecommendationService:
     """Ranks catalog products for a persona using model scores and robustness."""
@@ -41,12 +45,7 @@ class RecommendationService:
         if catalog is None:
             try:
                 import pandas as pd
-            except ModuleNotFoundError as exc:
-                raise RuntimeError(
-                    "pandas is required for local serving. Install requirements.txt."
-                ) from exc
 
-            try:
                 catalog = pd.read_parquet(self.settings.product_catalog_path)
             except Exception as exc:
                 raise RuntimeError(
@@ -78,18 +77,82 @@ class RecommendationService:
             else self._load_ranker_cols()
         )
 
+    # Number of top candidates to run full counterfactual analysis on.
+    _DEEP_CANDIDATES = 200
+
     def recommend(
         self, persona: dict[str, Any], top_k: int = 10
     ) -> list[dict[str, Any]]:
-        """Score and rank catalog products for a persona."""
+        """Score and rank catalog products for a persona.
 
-        import pandas as pd
+        Uses a two-phase approach for efficiency:
 
-        rows = []
-        for _, product in self.catalog.iterrows():
+        **Phase 1** — score *all* products with rating + ranker only
+        (2 model calls per product, ~38 ms each, ~80 s sequential).
+        This gives a preliminary ranking for every product.
+
+        **Phase 2** — run full counterfactuals (6 calls) on the top
+        *N* candidates where it matters for the final ranking.
+        """
+        limit = max(1, int(top_k))
+        n_deep = max(limit * 2, self._DEEP_CANDIDATES)
+
+        # ── Phase 1: quick score everything ──────────────────────────
+        catalog_items = list(self.catalog.iterrows())
+        quick_rows = [None] * len(catalog_items)
+        with ThreadPoolExecutor(max_workers=_N_WORKERS) as pool:
+            fut_map = {}
+            for idx, product in catalog_items:
+                prod_dict = product.to_dict() if hasattr(product, "to_dict") else dict(product)
+                fut = pool.submit(self._score_quick, persona, prod_dict)
+                fut_map[fut] = idx
+            for fut in as_completed(fut_map):
+                quick_rows[fut_map[fut]] = fut.result()
+
+        quick_rows = [r for r in quick_rows if r is not None]
+        if not quick_rows:
+            return []
+
+        # Preliminary ranking by predicted rating alone.
+        quick_rows.sort(key=lambda r: r["predicted_rating"], reverse=True)
+
+        # ── Phase 2: deep score top candidates ───────────────────────
+        deep_candidates = quick_rows[:n_deep]
+        deep_idx_map = {r["product_id"]: r for r in deep_candidates}
+
+        with ThreadPoolExecutor(max_workers=_N_WORKERS) as pool:
+            fut_map = {}
+            for row in deep_candidates:
+                fut = pool.submit(self._augment_deep, row, persona)
+                fut_map[fut] = row["product_id"]
+            for fut in as_completed(fut_map):
+                pid = fut_map[fut]
+                result = fut.result()
+                if result is not None:
+                    deep_idx_map[pid].update(result)
+
+        # ── Final ranking (only deep-scored rows can be top-K) ───────
+        self._apply_final_scores(deep_candidates)
+        deep_candidates.sort(key=lambda r: r["final_score"], reverse=True)
+        ranked = deep_candidates[:limit]
+        for item in ranked:
+            item.pop("_ranker_raw", None)
+            item.pop("_product_data", None)
+        return ranked
+
+    # ------------------------------------------------------------------
+    # Per-product scoring helpers (called from thread pool)
+    # ------------------------------------------------------------------
+
+    def _score_quick(
+        self, persona: dict[str, Any], product: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Phase 1: rating + ranker only (2 calls)."""
+        try:
+            import pandas as pd
+
             features = self._build_features(persona, product)
             predicted_rating = self.rating_service.predict_from_features(features)
-            counterfactuals = self.counterfactual_service.run_counterfactuals(features)
             ranker_score = float(
                 self.ranker.predict(
                     pd.DataFrame(
@@ -97,31 +160,44 @@ class RecommendationService:
                     )
                 )[0]
             )
+            return {
+                "product_id": str(product.get("product_id", product.get("item_id", ""))),
+                "product_name": str(product.get("product_name", "")),
+                "category": str(product.get("category", "")) or None,
+                "_product_data": product,  # kept for Phase 2 counterfactuals
+                "_ranker_raw": ranker_score,
+                "predicted_rating": round(predicted_rating, 2),
+                "ranker_score": round(ranker_score, 3),
+                # Neutral defaults — overwritten in Phase 2 for top candidates
+                "regret_risk": 0.0,
+                "robustness": 1.0,
+                "reason": (
+                    f"Predicted {predicted_rating:.1f}/5. "
+                    f"Robustness TBD, regret risk TBD."
+                ),
+            }
+        except Exception:
+            return None
 
-            rows.append(
-                {
-                    "product_id": str(product.get("product_id", product.get("item_id", ""))),
-                    "product_name": str(product.get("product_name", "")),
-                    "category": str(product.get("category", "")) or None,
-                    "_ranker_raw": ranker_score,
-                    "predicted_rating": round(predicted_rating, 2),
-                    "ranker_score": round(ranker_score, 3),
-                    "regret_risk": counterfactuals["regret_risk"],
-                    "robustness": counterfactuals["robustness"],
-                    "reason": (
-                        f"Predicted {predicted_rating:.1f}/5. "
-                        f"Robustness {counterfactuals['robustness']}, "
-                        f"regret risk {counterfactuals['regret_risk']}."
-                    ),
-                }
-            )
-
-        self._apply_final_scores(rows)
-        limit = max(0, int(top_k))
-        ranked = sorted(rows, key=lambda item: item["final_score"], reverse=True)[:limit]
-        for item in ranked:
-            item.pop("_ranker_raw", None)
-        return ranked
+    def _augment_deep(
+        self, row: dict[str, Any], persona: dict[str, Any]
+    ) -> dict[str, Any] | None:
+        """Phase 2: run counterfactuals for a top candidate."""
+        try:
+            product = row.get("_product_data", row)
+            features = self._build_features(persona, product)
+            counterfactuals = self.counterfactual_service.run_counterfactuals(features)
+            return {
+                "regret_risk": counterfactuals["regret_risk"],
+                "robustness": counterfactuals["robustness"],
+                "reason": (
+                    f"Predicted {row['predicted_rating']:.1f}/5. "
+                    f"Robustness {counterfactuals['robustness']}, "
+                    f"regret risk {counterfactuals['regret_risk']}."
+                ),
+            }
+        except Exception:
+            return None
 
     @staticmethod
     def _build_features(persona: dict[str, Any], product: Any) -> dict[str, Any]:
