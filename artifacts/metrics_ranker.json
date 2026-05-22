@@ -1,0 +1,14 @@
+{
+  "train_ndcg_at_10": 0.6692290618484471,
+  "test_ndcg_at_10": 0.6388584758637802,
+  "validation_ndcg_at_10": 0.6388584758637802,
+  "ndcg_generalization_gap": 0.03037058598466691,
+  "train_query_count": 1081,
+  "test_query_count": 271,
+  "train_row_count": 4324,
+  "test_row_count": 1084,
+  "num_negative_samples_per_positive": 3,
+  "model_type": "HistGradientBoostingRegressor relevance scorer",
+  "best_iteration": 20,
+  "random_seed": 42
+}

@@ -1,0 +1,30 @@
+[project]
+name = "volt"
+version = "0.1.0"
+description = "Volt — review simulation and persona-driven recommendations."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "datasets==3.6.0",
+    "fastapi==0.115.12",
+    "google-generativeai==0.8.5",
+    "imbalanced-learn>=0.14.1",
+    "joblib==1.5.1",
+    "nltk==3.9.1",
+    "numpy==2.2.6",
+    "pandas==2.2.3",
+    "pyarrow==19.0.1",
+    "pydantic==2.11.5",
+    "python-dotenv==1.1.0",
+    "scikit-learn==1.6.1",
+    "tqdm==4.67.1",
+    "uvicorn==0.34.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.uv]
+package = false

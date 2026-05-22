@@ -1,0 +1,142 @@
+[
+  {
+    "name": "two_stage_thr07",
+    "rounded_accuracy": 0.7587548638132295
+  },
+  {
+    "name": "two_stage_base",
+    "rounded_accuracy": 0.754863813229572
+  },
+  {
+    "name": "two_stage_alpha05",
+    "rounded_accuracy": 0.754863813229572
+  },
+  {
+    "name": "two_stage_alpha2",
+    "rounded_accuracy": 0.754863813229572
+  },
+  {
+    "name": "two_stage_clfC50",
+    "rounded_accuracy": 0.754863813229572
+  },
+  {
+    "name": "two_stage_clfC500",
+    "rounded_accuracy": 0.754863813229572
+  },
+  {
+    "name": "two_stage_thr06",
+    "rounded_accuracy": 0.754863813229572
+  },
+  {
+    "name": "two_stage_thr075",
+    "rounded_accuracy": 0.754863813229572
+  },
+  {
+    "name": "two_stage_ridgecv",
+    "rounded_accuracy": 0.754863813229572
+  },
+  {
+    "name": "two_stage_clfC10",
+    "rounded_accuracy": 0.7509727626459144
+  },
+  {
+    "name": "two_stage_inv2",
+    "rounded_accuracy": 0.7392996108949417
+  },
+  {
+    "name": "alpha0.5",
+    "rounded_accuracy": 0.7354085603112841
+  },
+  {
+    "name": "two_stage_cal02",
+    "rounded_accuracy": 0.7354085603112841
+  },
+  {
+    "name": "enc_no_enc",
+    "rounded_accuracy": 0.7315175097276264
+  },
+  {
+    "name": "inverse_cal0.0",
+    "rounded_accuracy": 0.7315175097276264
+  },
+  {
+    "name": "alpha1.0",
+    "rounded_accuracy": 0.7315175097276264
+  },
+  {
+    "name": "alpha2.0",
+    "rounded_accuracy": 0.7315175097276264
+  },
+  {
+    "name": "ridgecv",
+    "rounded_accuracy": 0.7315175097276264
+  },
+  {
+    "name": "two_stage_cal05",
+    "rounded_accuracy": 0.7315175097276264
+  },
+  {
+    "name": "alpha0.05",
+    "rounded_accuracy": 0.7276264591439688
+  },
+  {
+    "name": "alpha0.1",
+    "rounded_accuracy": 0.7237354085603113
+  },
+  {
+    "name": "two_stage_inv2_cal02",
+    "rounded_accuracy": 0.7237354085603113
+  },
+  {
+    "name": "inverse2_cal0.0",
+    "rounded_accuracy": 0.7198443579766537
+  },
+  {
+    "name": "sqrt_cal0.2",
+    "rounded_accuracy": 0.7198443579766537
+  },
+  {
+    "name": "sqrt_cal0.5",
+    "rounded_accuracy": 0.7159533073929961
+  },
+  {
+    "name": "alpha10.0",
+    "rounded_accuracy": 0.7159533073929961
+  },
+  {
+    "name": "alpha20.0",
+    "rounded_accuracy": 0.7159533073929961
+  },
+  {
+    "name": "inverse_cal0.2",
+    "rounded_accuracy": 0.7120622568093385
+  },
+  {
+    "name": "alpha5.0",
+    "rounded_accuracy": 0.7120622568093385
+  },
+  {
+    "name": "inverse_cal0.5",
+    "rounded_accuracy": 0.708171206225681
+  },
+  {
+    "name": "inverse2_cal0.2",
+    "rounded_accuracy": 0.7042801556420234
+  },
+  {
+    "name": "inverse2_cal0.5",
+    "rounded_accuracy": 0.6926070038910506
+  },
+  {
+    "name": "enc_+user_item_enc",
+    "rounded_accuracy": 0.6848249027237354
+  },
+  {
+    "name": "two_stage_enc",
+    "rounded_accuracy": 0.6848249027237354
+  },
+  {
+    "name": "sqrt_cal0.0",
+    "rounded_accuracy": 0.6809338521400778
+  }
+]

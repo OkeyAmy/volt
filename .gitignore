@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+
+# Environment
+.env
+
+# Generated data
+data/raw/
+data/processed/
+
+# Trained artifacts
+artifacts/*.pkl
+
+# Metrics (committed only if you want to track evaluation history)
+# artifacts/*.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter (ephemeral)
+.ipynb_checkpoints/
+
+# OpenCode agent artifacts
+.agents/
+.omx/
+docs/
+
+
+# uv lock file is safe to commit but large diffs are noisy
+# uv.lock is intentionally not listed

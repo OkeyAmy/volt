@@ -1,0 +1,80 @@
+{
+  "train_rmse": 0.471072517607373,
+  "train_mae": 0.2532709459525929,
+  "test_rmse": 0.6737021142503469,
+  "test_mae": 0.3062730627306273,
+  "test_macro_rating_mae": 1.1785455486542442,
+  "test_rounded_accuracy": 0.7453874538745388,
+  "rating_rmse": 0.6737021142503469,
+  "rating_mae": 0.3062730627306273,
+  "rmse_generalization_gap": 0.20262959664297386,
+  "num_train": 1081,
+  "num_test": 271,
+  "model_type": "Two-stage: TF-IDF bigram(1,2) text 12k-features + StandardScaler numeric  + RidgeCV for fine-grained rating + LR(C=200) low-rating classifier override",
+  "ridge_best_alpha": 1.0,
+  "classifier_C": 200,
+  "classifier_low_threshold": 0.85,
+  "classifier_high_threshold": 1.0,
+  "override_count_test": 11,
+  "override_count_cap2": 0,
+  "override_count_cap3": 11,
+  "ridge_only_accuracy": 0.7343173431734318,
+  "imbalance_strategy": "Inverse target transform 1/(6-star+0.1) for Ridge regressor + class_weight='balanced' for low-rating LogisticRegression classifier. Tiered inference: clf_prob > high \u2192 cap at 2, clf_prob > low \u2192 cap at 3.",
+  "train_distribution": {
+    "1.0": 18,
+    "2.0": 14,
+    "3.0": 66,
+    "4.0": 249,
+    "5.0": 734
+  },
+  "test_distribution": {
+    "1.0": 5,
+    "2.0": 3,
+    "3.0": 16,
+    "4.0": 63,
+    "5.0": 184
+  },
+  "text_max_features": 12000,
+  "text_ngram_range": [
+    1,
+    2
+  ],
+  "text_min_df": 3,
+  "numeric_feature_count": 23,
+  "target_transform": "inverse 1/(6-star+0.1)",
+  "test_per_rating": {
+    "1.0": {
+      "count": 5,
+      "prediction_mean": 4.0,
+      "mae": 3.0
+    },
+    "2.0": {
+      "count": 3,
+      "prediction_mean": 3.3333333333333335,
+      "mae": 1.3333333333333333
+    },
+    "3.0": {
+      "count": 16,
+      "prediction_mean": 3.8125,
+      "mae": 0.8125
+    },
+    "4.0": {
+      "count": 63,
+      "prediction_mean": 4.619047619047619,
+      "mae": 0.7142857142857143
+    },
+    "5.0": {
+      "count": 184,
+      "prediction_mean": 4.967391304347826,
+      "mae": 0.03260869565217391
+    }
+  },
+  "random_seed": 42,
+  "production_trained_on_all_data": true,
+  "production_num_rows": 1352,
+  "production_ridge_alpha": 1.0,
+  "production_classifier_low_threshold": 0.76,
+  "production_classifier_high_threshold": 1.0,
+  "production_cv_accuracy": 0.7397,
+  "cleaning_improvements": "Category normalization (12\u219211 canonical), HTML/URL stripping, rating literal handling, min-word filter, max-chars cap, sorted dedup with user+item+text+rating key"
+}
