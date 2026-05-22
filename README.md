@@ -282,7 +282,58 @@ cp .env.example .env
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-### 6.2 Default Model
+### 6.2 Quick Start — What Values to Provide
+
+The API needs two things from you: **who the reviewer is** (persona) and **what the product is like** (product features). Here is what every field means and what values to use.
+
+#### Persona Fields (who is reviewing?)
+
+| Field | Range | What It Means | Example Values |
+|---|---|---|---|
+| `budget_sensitivity` | 0.0 – 1.0 | How much they care about price | `0.1` = doesn't care about cost; `0.9` = extreme penny-pincher |
+| `service_sensitivity` | 0.0 – 1.0 | How much they care about customer service | `0.2` = service doesn't matter; `0.9` = bad service ruins everything |
+| `quality_sensitivity` | 0.0 – 1.0 | How much they care about product quality | `0.3` = not picky about quality; `0.95` = notices every flaw |
+| `strictness` | 0.0 – 1.0 | Overall pickiness (multiplies everything) | `0.1` = easy to please; `0.9` = almost impossible to satisfy |
+| `tone` | 0 – 5 | Writing style | `0` = brief, `2` = casual, `4` = detailed, `5` = angry |
+| `review_length` | 1 – 5000 | Target word count | `20` = short tweet-like review; `80` = long detailed review |
+
+**Quick recipes:**
+
+| Persona | budget | service | quality | strictness | tone | length |
+|---|---|---|---|---|---|---|
+| Penny-pincher | **0.9** | 0.3 | 0.2 | 0.2 | 2 | 20 |
+| Quality snob | 0.2 | 0.6 | **0.95** | **0.8** | 4 | 80 |
+| Average user | 0.5 | 0.5 | 0.5 | 0.4 | 2 | 40 |
+| Angry customer | 0.7 | **0.9** | **0.9** | **0.95** | **5** | 60 |
+| Easy to please | 0.1 | 0.1 | 0.1 | 0.05 | 1 | 15 |
+
+#### Product Fields (what are they reviewing?)
+
+| Field | Range | What It Means | Example Values |
+|---|---|---|---|
+| `quality_signal` | −1.0 – 1.0 | Perceived build quality | `−0.5` = poorly made; `0.9` = excellent build |
+| `service_signal` | −1.0 – 1.0 | Perceived customer service | `−0.8` = rude staff; `0.7` = helpful support |
+| `value_signal` | −1.0 – 1.0 | Value for money | `0.8` = great deal; `−0.5` = overpriced |
+| `usability_signal` | −1.0 – 1.0 | Ease of use | `0.9` = very intuitive; `−0.3` = confusing |
+| `price_level` | 0 – 2 | Price tier | `0` = budget, `1` = mid-range, `2` = premium |
+| `aspect_quality` | −1, 0, 1 | Sentiment about quality | `−1` = complained about quality; `1` = praised it |
+| `aspect_price` | −1, 0, 1 | Sentiment about pricing | `−1` = too expensive; `1` = great price |
+| `aspect_service` | −1, 0, 1 | Sentiment about service | `−1` = bad service; `1` = good service |
+| `aspect_value` | −1, 0, 1 | Sentiment about value | `−1` = not worth it; `1` = good value |
+| `aspect_usability` | −1, 0, 1 | Sentiment about ease of use | `−1` = hard to use; `1` = easy to use |
+| `aspect_delivery` | −1, 0, 1 | Sentiment about shipping | `−1` = late delivery; `1` = fast shipping |
+
+**Quick recipes:**
+
+| Product | quality_signal | service_signal | value_signal | usability | price_level | product_text |
+|---|---|---|---|---|---|---|
+| Cheap speaker | 0.2 | 0.0 | 0.8 | 0.7 | 0 (budget) | "Sound is okay for the price but build feels cheap" |
+| Premium headphones | 0.9 | 0.5 | 0.3 | 0.85 | 2 (premium) | "Incredible sound but you will pay a premium" |
+| Terrible service | 0.3 | −0.8 | 0.2 | 0.5 | 1 (mid) | "Repair was fine but staff were rude and it took 3 weeks" |
+
+> **Tip**: Open `https://volt-sc25.onrender.com/presets` for a complete set of ready-to-copy examples you can paste directly into the API.
+
+### 6.3 Default Model
 
 The review generator uses `gemini-3.5-flash` by default. Override with:
 
@@ -290,7 +341,7 @@ The review generator uses `gemini-3.5-flash` by default. Override with:
 echo "GEMINI_MODEL=gemini-2.5-flash" >> .env
 ```
 
-### 6.3 Task A: Generate Review
+### 6.4 Task A: Generate Review
 
 Predicts a rating, runs counterfactual sensitivity analysis, and generates a natural-language review.
 
@@ -345,7 +396,7 @@ curl -X POST http://localhost:8000/task-a/generate-review \
 
 The system predicts 3.0 (not 5.0) because the model detects negative signals in `product_text` ("battery drains", "scratch") and the low `quality_signal` (0.3) + negative `service_signal` (-0.5) push the classifier confidence above the override threshold.
 
-### 6.4 Task B: Recommend Products
+### 6.5 Task B: Recommend Products
 
 Scores all 1055 catalog products against a persona, ranks by predicted fit, and returns the top-K.
 
@@ -397,14 +448,14 @@ Each result includes the predicted rating, a ranker score (how well the product 
 
 **Performance note**: The endpoint processes all 1055 catalog products in approximately 2.3 minutes using a two-phase scoring strategy. In Phase 1, every product receives a quick evaluation (rating prediction + ranker score, ~38ms each). In Phase 2, only the top 200 candidates — where the extra analysis actually affects the final ranking — undergo the full 6-evaluation counterfactual analysis. The work is spread across 8 parallel threads. This cut response time from the original 6–9 minutes by roughly 75%. Think of it as pre-screening every applicant with a quick eligibility check before running the full background check on the most promising candidates.
 
-### 6.5 Health Check
+### 6.6 Health Check
 
 ```bash
 curl http://localhost:8000/health
 # {"status":"ok"}
 ```
 
-### 6.6 Performance Optimisations
+### 6.7 Performance Optimisations
 
 The initial v1 implementation scored every product sequentially with all 6 model evaluations — a brute-force approach that took 6–9 minutes. Three optimisations brought this down to ~2.3 minutes:
 
@@ -414,7 +465,7 @@ The initial v1 implementation scored every product sequentially with all 6 model
 
 3. **Parallel execution** — Both phases distribute work across 8 worker threads via `ThreadPoolExecutor`. Since each product is scored independently, processing them in parallel provides roughly a 2.5× speedup over sequential evaluation (limited by CPython's global interpreter lock and string-processing overhead). This is like having 8 cashiers serving customers instead of 1.
 
-### 6.7 Deployment
+### 6.8 Deployment
 
 #### Docker
 

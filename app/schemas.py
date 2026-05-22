@@ -47,30 +47,98 @@ class FeatureModel(StrictBaseModel):
 
 
 class PersonaFeatures(FeatureModel):
-    budget_sensitivity: float = Field(..., ge=0.0, le=1.0)
-    service_sensitivity: float = Field(..., ge=0.0, le=1.0)
-    quality_sensitivity: float = Field(..., ge=0.0, le=1.0)
-    strictness: float = Field(..., ge=0.0, le=1.0)
-    tone: Tone
-    review_length: int = Field(..., ge=1, le=5000)
+    budget_sensitivity: float = Field(
+        ...,
+        ge=0.0, le=1.0,
+        description="How price-conscious is this user? 0 = doesn't care about price, 1 = extreme budget hunter. High values make the system favour cheaper products and penalise poor value.",
+    )
+    service_sensitivity: float = Field(
+        ...,
+        ge=0.0, le=1.0,
+        description="How much does the user care about customer service? 0 = service doesn't matter, 1 = bad service alone ruins the experience.",
+    )
+    quality_sensitivity: float = Field(
+        ...,
+        ge=0.0, le=1.0,
+        description="How much does the user care about product quality? 0 = quality doesn't matter, 1 = any flaw is unacceptable.",
+    )
+    strictness: float = Field(
+        ...,
+        ge=0.0, le=1.0,
+        description="Overall pickiness. 0 = easy to please, 1 = hard to ever satisfy. Acts as a general severity multiplier across all dimensions.",
+    )
+    tone: Tone = Field(
+        ...,
+        description="Writing style: 0 = brief, 1 = polite, 2 = casual, 3 = direct, 4 = detailed, 5 = angry.",
+    )
+    review_length: int = Field(
+        ...,
+        ge=1, le=5000,
+        description="How many words the generated review should be. Typical values: 15-30 for short, 50-100 for detailed.",
+    )
 
 
 class ProductFeatures(FeatureModel):
-    product_name: str | None = Field(default=None, max_length=300)
-    category: str | None = Field(default=None, max_length=120)
-    description: str | None = Field(default=None, max_length=5000)
-    quality_signal: float = Field(..., ge=-1.0, le=1.0)
-    service_signal: float = Field(..., ge=-1.0, le=1.0)
-    value_signal: float = Field(..., ge=-1.0, le=1.0)
-    usability_signal: float = Field(..., ge=-1.0, le=1.0)
-    price_level: PriceLevel
-    aspect_quality: AspectSentiment
-    aspect_price: AspectSentiment
-    aspect_service: AspectSentiment
-    aspect_value: AspectSentiment
-    aspect_usability: AspectSentiment
-    aspect_delivery: AspectSentiment
-    product_text: str | None = Field(default=None, max_length=5000)
+    product_name: str | None = Field(
+        default=None, max_length=300,
+        description="Product name, e.g. 'Bluetooth Speaker X200'. Used as context for review generation.",
+    )
+    category: str | None = Field(
+        default=None, max_length=120,
+        description="Product category, e.g. 'Electronics', 'Home', 'Books & Stationery'. Affects review language.",
+    )
+    description: str | None = Field(
+        default=None, max_length=5000,
+        description="Short product description. Combined with product_text for feature extraction.",
+    )
+    quality_signal: float = Field(
+        ..., ge=-1.0, le=1.0,
+        description="Perceived build quality from review text. -1 = terrible quality, 0 = neutral, +1 = excellent quality.",
+    )
+    service_signal: float = Field(
+        ..., ge=-1.0, le=1.0,
+        description="Perceived customer service quality from review text. -1 = horrible service, 0 = neutral, +1 = great service.",
+    )
+    value_signal: float = Field(
+        ..., ge=-1.0, le=1.0,
+        description="Perceived value for money. -1 = overpriced/rip-off, 0 = fair price, +1 = amazing deal.",
+    )
+    usability_signal: float = Field(
+        ..., ge=-1.0, le=1.0,
+        description="Perceived ease of use. -1 = impossible to use, 0 = average, +1 = very intuitive.",
+    )
+    price_level: PriceLevel = Field(
+        ...,
+        description="Price tier: 0 = low (budget), 1 = medium (mid-range), 2 = high (premium/luxury).",
+    )
+    aspect_quality: AspectSentiment = Field(
+        ...,
+        description="Review sentiment about product quality: -1 = negative, 0 = neutral, 1 = positive.",
+    )
+    aspect_price: AspectSentiment = Field(
+        ...,
+        description="Review sentiment about pricing: -1 = negative/too expensive, 0 = neutral, 1 = positive/good value.",
+    )
+    aspect_service: AspectSentiment = Field(
+        ...,
+        description="Review sentiment about customer service: -1 = negative, 0 = neutral, 1 = positive.",
+    )
+    aspect_value: AspectSentiment = Field(
+        ...,
+        description="Review sentiment about value for money: -1 = negative/overpriced, 0 = neutral, 1 = positive/good deal.",
+    )
+    aspect_usability: AspectSentiment = Field(
+        ...,
+        description="Review sentiment about ease of use: -1 = negative/hard to use, 0 = neutral, 1 = positive/easy to use.",
+    )
+    aspect_delivery: AspectSentiment = Field(
+        ...,
+        description="Review sentiment about delivery/shipping: -1 = negative/late, 0 = neutral, 1 = positive/fast.",
+    )
+    product_text: str | None = Field(
+        default=None, max_length=5000,
+        description="Raw review text or product description used for dynamic feature extraction (negativity, complaints, sentiment gaps). The model reads this to infer signals. Example: 'The battery drains fast and the screen has a scratch.'",
+    )
 
     def to_feature_dict(self) -> dict[str, Any]:
         data = super().to_feature_dict()
