@@ -1,0 +1,50 @@
+{
+  "raw_row_count": 1497,
+  "clean_row_count": 1352,
+  "total_dropped": 145,
+  "dropped_by_reason": {
+    "unparseable_rating": 145,
+    "null_key_fields": 0,
+    "placeholder_or_too_short": 0,
+    "duplicates": 0
+  },
+  "train_row_count": 1081,
+  "test_row_count": 271,
+  "distinct_users": 1331,
+  "distinct_items": 1308,
+  "distinct_categories": 11,
+  "categories": [
+    "Beauty & Personal Care",
+    "Books & Stationery",
+    "Clothing & Accessories",
+    "Electronics",
+    "Grocery & Gourmet Food",
+    "Health, Wellness & Medical Supplies",
+    "Home",
+    "Kitchen",
+    "Pet Supplies",
+    "Sports, Outdoors & Travel",
+    "Toys, Games & Hobbies"
+  ],
+  "rating_distribution": {
+    "1.0": 23,
+    "2.0": 17,
+    "3.0": 82,
+    "4.0": 312,
+    "5.0": 918
+  },
+  "cleaning_rules": {
+    "min_review_words": 5,
+    "max_review_chars": 10000,
+    "category_normalisation": "canonical map (12 \u2192 10 categories)",
+    "text_cleaning": "strip HTML entities, strip URLs, collapse whitespace",
+    "dedupe_key": [
+      "user_id",
+      "item_id",
+      "review_text",
+      "rating_num"
+    ],
+    "split": "stratified_by_rating_num",
+    "random_seed": 42
+  }
+}

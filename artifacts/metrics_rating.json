@@ -75,6 +75,5 @@
   "production_ridge_alpha": 1.0,
   "production_classifier_low_threshold": 0.76,
   "production_classifier_high_threshold": 1.0,
-  "production_cv_accuracy": 0.7397,
-  "cleaning_improvements": "Category normalization (12\u219211 canonical), HTML/URL stripping, rating literal handling, min-word filter, max-chars cap, sorted dedup with user+item+text+rating key"
+  "production_cv_accuracy": 0.7396583299166325
 }

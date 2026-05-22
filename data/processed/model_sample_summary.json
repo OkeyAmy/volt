@@ -1,0 +1,128 @@
+{
+  "train": {
+    "rows": 1081,
+    "correct": 923,
+    "incorrect": 158,
+    "pass_rate": 0.8538390379278445,
+    "rating_distribution": {
+      "1.0": 18,
+      "2.0": 14,
+      "3.0": 66,
+      "4.0": 249,
+      "5.0": 734
+    },
+    "rmse": 0.4672688091338257,
+    "mae": 0.2511697482921745,
+    "rounded_accuracy": 0.8538390379278445,
+    "per_rating": {
+      "1.0": {
+        "count": 18,
+        "correct": 1,
+        "incorrect": 17,
+        "pass_rate": 0.05555555555555555,
+        "sample_count": 3,
+        "mae": 2.1682444747943097,
+        "prediction_mean": 3.1682444747943097
+      },
+      "2.0": {
+        "count": 14,
+        "correct": 1,
+        "incorrect": 13,
+        "pass_rate": 0.07142857142857142,
+        "sample_count": 3,
+        "mae": 1.4111027363176487,
+        "prediction_mean": 3.4111027363176483
+      },
+      "3.0": {
+        "count": 66,
+        "correct": 7,
+        "incorrect": 59,
+        "pass_rate": 0.10606060606060606,
+        "sample_count": 3,
+        "mae": 0.8794183930772564,
+        "prediction_mean": 3.875451580149279
+      },
+      "4.0": {
+        "count": 249,
+        "correct": 181,
+        "incorrect": 68,
+        "pass_rate": 0.7269076305220884,
+        "sample_count": 3,
+        "mae": 0.38414658410163743,
+        "prediction_mean": 4.36415750921471
+      },
+      "5.0": {
+        "count": 734,
+        "correct": 733,
+        "incorrect": 1,
+        "pass_rate": 0.9986376021798365,
+        "sample_count": 3,
+        "mae": 0.08043126112355492,
+        "prediction_mean": 4.919568738876444
+      }
+    }
+  },
+  "test": {
+    "rows": 271,
+    "correct": 232,
+    "incorrect": 39,
+    "pass_rate": 0.8560885608856088,
+    "rating_distribution": {
+      "1.0": 5,
+      "2.0": 3,
+      "3.0": 16,
+      "4.0": 63,
+      "5.0": 184
+    },
+    "rmse": 0.46902141762113503,
+    "mae": 0.25129666458517047,
+    "rounded_accuracy": 0.8560885608856088,
+    "per_rating": {
+      "1.0": {
+        "count": 5,
+        "correct": 0,
+        "incorrect": 5,
+        "pass_rate": 0.0,
+        "sample_count": 3,
+        "mae": 2.394928394790544,
+        "prediction_mean": 3.3949283947905435
+      },
+      "2.0": {
+        "count": 3,
+        "correct": 0,
+        "incorrect": 3,
+        "pass_rate": 0.0,
+        "sample_count": 3,
+        "mae": 1.0472903733660628,
+        "prediction_mean": 3.0472903733660623
+      },
+      "3.0": {
+        "count": 16,
+        "correct": 2,
+        "incorrect": 14,
+        "pass_rate": 0.125,
+        "sample_count": 3,
+        "mae": 0.8307478698060872,
+        "prediction_mean": 3.8307478698060873
+      },
+      "4.0": {
+        "count": 63,
+        "correct": 46,
+        "incorrect": 17,
+        "pass_rate": 0.7301587301587301,
+        "sample_count": 3,
+        "mae": 0.38645601197155716,
+        "prediction_mean": 4.35205968387852
+      },
+      "5.0": {
+        "count": 184,
+        "correct": 184,
+        "incorrect": 0,
+        "pass_rate": 1.0,
+        "sample_count": 3,
+        "mae": 0.08340319748600426,
+        "prediction_mean": 4.916596802513996
+      }
+    }
+  }
+}

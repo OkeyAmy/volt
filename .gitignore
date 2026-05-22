@@ -13,10 +13,10 @@ build/
 
 # Generated data
 data/raw/
-data/processed/
+# data/processed/  — committed for Docker deployment (4 MB)
 
 # Trained artifacts
-artifacts/*.pkl
+# artifacts/*.pkl  — committed for Docker deployment (1.2 MB)
 
 # Metrics (committed only if you want to track evaluation history)
 # artifacts/*.json
