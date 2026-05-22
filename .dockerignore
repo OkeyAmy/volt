@@ -1,0 +1,13 @@
+.git
+.gitignore
+.gitattributes
+.venv
+.agents
+.omx
+__pycache__
+*.pyc
+.env
+.env.example
+docs/
+README.md
+docker-compose.yml
