@@ -85,12 +85,28 @@ class ServiceContainer:
 def create_app(container: ServiceContainer | None = None) -> FastAPI:
     """Create a dependency-friendly FastAPI app."""
 
-    app = FastAPI(title="Volt API")
+    app = FastAPI(
+        title="Volt API",
+        description=(
+            "Containerized API for the DSN X BCT LLM Agent Challenge: "
+            "persona-based review generation and recommendations."
+        ),
+        version="0.1.0",
+    )
     app.state.services = container or ServiceContainer(get_settings())
 
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(status="ok")
+
+    @app.get("/")
+    def root() -> dict[str, Any]:
+        return {
+            "name": "Volt API",
+            "docs": "/docs",
+            "task_a": "/task-a/generate-review",
+            "task_b": "/task-b/recommend",
+        }
 
     @app.post("/task-a/generate-review", response_model=GenerateReviewResponse)
     def generate_review(
@@ -99,8 +115,8 @@ def create_app(container: ServiceContainer | None = None) -> FastAPI:
     ) -> dict[str, Any]:
         """Task A: predict rating, run counterfactuals, and generate review."""
 
-        persona = req.persona_features.to_feature_dict()
-        product = req.product_features.to_feature_dict()
+        persona = req.persona_feature_dict()
+        product = req.product_feature_dict()
         features = {**persona, **product}
         predicted = services.rating().predict_from_features(features)
         counterfactuals = services.counterfactual().run_counterfactuals(features)
@@ -127,9 +143,24 @@ def create_app(container: ServiceContainer | None = None) -> FastAPI:
 
         return {
             "recommendations": services.recommendation().recommend(
-                req.persona_features.to_feature_dict(), req.top_k
+                req.persona_feature_dict(), req.top_k
             )
         }
+
+    app.add_api_route(
+        "/generate-review",
+        generate_review,
+        methods=["POST"],
+        response_model=GenerateReviewResponse,
+        tags=["compatibility"],
+    )
+    app.add_api_route(
+        "/recommend",
+        recommend,
+        methods=["POST"],
+        response_model=RecommendResponse,
+        tags=["compatibility"],
+    )
 
     return app
 

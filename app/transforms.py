@@ -1,20 +1,35 @@
 """Target transforms for rating model. Shared by training and serving."""
 
-import numpy as np
 
+from __future__ import annotations
+
+from collections.abc import Iterable
 
 INVERSE_EPSILON = 0.1
 
 
 def rating_inverse_transform(y):
     """Inverse target transform: 1/(6-star+0.1) spreads out low ratings."""
+    import numpy as np
+
     return 1.0 / (6 - np.asarray(y, dtype=float) + INVERSE_EPSILON)
+
+
+def _clip(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(upper, value))
+
+
+def _inverse_one(value: float) -> float:
+    clipped = _clip(float(value), 0.01, 10.0)
+    raw = 6 - ((1.0 / clipped) - INVERSE_EPSILON)
+    return _clip(raw, 1.0, 5.0)
 
 
 def rating_inverse_transform_inv(y_pred):
     """Inverse of rating_inverse_transform: maps predictions back to 1-5."""
-    raw = 6 - (1.0 / np.clip(np.asarray(y_pred, dtype=float), 0.01, 10) - INVERSE_EPSILON)
-    return np.clip(raw, 1, 5)
+    if isinstance(y_pred, (str, bytes)) or not isinstance(y_pred, Iterable):
+        return _inverse_one(float(y_pred))
+    return [_inverse_one(value) for value in y_pred]
 
 
 def apply_low_rating_override(

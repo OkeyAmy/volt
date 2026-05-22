@@ -35,6 +35,8 @@ class Settings:
     ranker_feature_cols_path: Path
     gemini_api_key: str | None
     gemini_model_name: str
+    heuristic_fallback: bool
+    enable_llm_generation: bool
 
 
 @lru_cache(maxsize=1)
@@ -60,5 +62,9 @@ def get_settings() -> Settings:
         ranker_model_path=artifacts_dir / "ranker_model.pkl",
         ranker_feature_cols_path=artifacts_dir / "ranker_feature_cols.pkl",
         gemini_api_key=os.getenv("GEMINI_API_KEY"),
-        gemini_model_name=os.getenv("GEMINI_MODEL", "gemini-3.5-flash"),
+        gemini_model_name=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
+        heuristic_fallback=os.getenv("VOLT_HEURISTIC_FALLBACK", "true").lower()
+        not in {"0", "false", "no"},
+        enable_llm_generation=os.getenv("VOLT_ENABLE_LLM", "true").lower()
+        not in {"0", "false", "no"},
     )

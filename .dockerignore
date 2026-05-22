@@ -1,0 +1,13 @@
+.git
+.venv
+__pycache__
+*.pyc
+.env
+.agents
+.omx
+data/raw
+data/processed
+artifacts/*.pkl
+dist
+build
+.pytest_cache
