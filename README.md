@@ -365,6 +365,36 @@ curl -X POST http://localhost:8000/task-b/recommend \
   }'
 ```
 
+**Example response** (top 2 of 1055 ranked products):
+```json
+[
+  {
+    "product_id": "prod_162",
+    "product_name": "I bought this for my almost 10 year old grandson! I appreciated the QUALITY!",
+    "category": "Toys, Games & Hobbies",
+    "predicted_rating": 4.99,
+    "ranker_score": 0.742,
+    "regret_risk": 0.01,
+    "robustness": 0.99,
+    "final_score": 0.995,
+    "reason": "Predicted 5.0/5. Robustness 0.99, regret risk 0.01."
+  },
+  {
+    "product_id": "prod_97",
+    "product_name": "This backpack is awesome! I took it on a cruise with me and it helped so much.",
+    "category": "Sports, Outdoors & Travel",
+    "predicted_rating": 5.0,
+    "ranker_score": 0.725,
+    "regret_risk": 0.0,
+    "robustness": 1.0,
+    "final_score": 0.981,
+    "reason": "Predicted 5.0/5. Robustness 1.0, regret risk 0.0."
+  }
+]
+```
+
+Each result includes the predicted rating, a ranker score (how well the product matches the persona), `regret_risk` and `robustness` from the counterfactual analysis, and a combined `final_score` that weights all signals. The top-ranked product — a toy for a grandson — scores highest for a persona with high quality and budget sensitivity because its reviews emphasise build quality and value at a reasonable price point.
+
 **Performance note**: The endpoint processes all 1055 catalog products in approximately 2.3 minutes using a two-phase scoring strategy. In Phase 1, every product receives a quick evaluation (rating prediction + ranker score, ~38ms each). In Phase 2, only the top 200 candidates — where the extra analysis actually affects the final ranking — undergo the full 6-evaluation counterfactual analysis. The work is spread across 8 parallel threads. This cut response time from the original 6–9 minutes by roughly 75%. Think of it as pre-screening every applicant with a quick eligibility check before running the full background check on the most promising candidates.
 
 ### 6.5 Health Check
