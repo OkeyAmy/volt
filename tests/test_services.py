@@ -229,6 +229,33 @@ class ReviewGeneratorTest(unittest.TestCase):
                 {"rating": 4, "review": " ", "reasoning_summary": "Invalid"}
             )
 
+    def test_generate_falls_back_without_llm_configuration(self):
+        settings = types.SimpleNamespace(
+            gemini_api_key=None,
+            gemini_model_name="unused",
+            enable_llm_generation=False,
+        )
+        generator = ReviewGenerator(settings=settings)
+
+        result = generator.generate(
+            persona={
+                "budget_sensitivity": 0.8,
+                "service_sensitivity": 0.4,
+                "quality_sensitivity": 0.9,
+                "strictness": 0.6,
+                "tone": 3,
+            },
+            product={
+                "product_name": "Budget power bank",
+                "category": "Electronics",
+            },
+            rating=4.2,
+            counterfactuals={},
+        )
+
+        self.assertEqual(result["rating"], 4.0)
+        self.assertIn("Budget power bank", result["review"])
+
 
 if __name__ == "__main__":
     unittest.main()

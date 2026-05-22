@@ -1206,6 +1206,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "httpx" },
     { name = "pytest" },
 ]
 
@@ -1214,6 +1215,7 @@ requires-dist = [
     { name = "datasets", specifier = "==3.6.0" },
     { name = "fastapi", specifier = "==0.115.12" },
     { name = "google-generativeai", specifier = "==0.8.5" },
+    { name = "httpx", marker = "extra == 'dev'" },
     { name = "imbalanced-learn", specifier = ">=0.14.1" },
     { name = "joblib", specifier = "==1.5.1" },
     { name = "nltk", specifier = "==3.9.1" },

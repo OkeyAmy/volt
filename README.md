@@ -268,29 +268,49 @@ With perfect cap-at-3 detection, the model could match 203/271 test reviews = 79
 
 ## 6. Serving API
 
-### 6.1 Setup
+### 6.1 Quick Start With Docker
+
+The judging path is a containerized FastAPI app. It works even when the
+gitignored model `.pkl` files and Gemini API key are not present: trained
+artifacts are used when available, otherwise Volt falls back to deterministic
+heuristics so both tasks remain testable.
+
+```bash
+docker build -t volt-api .
+docker run --rm -p 8000:8000 --env-file .env.example volt-api
+```
+
+Open the API docs at `http://localhost:8000/docs` or check health:
+
+```bash
+curl http://localhost:8000/health
+# {"status":"ok"}
+```
+
+### 6.2 Local Setup
 
 ```bash
 # Install dependencies
 uv sync --python 3.11
 
-# Configure API key
+# Optional: configure an LLM key for Gemini-backed reviews.
+# Without this, the deterministic review writer is used.
 cp .env.example .env
-# Edit .env with your GEMINI_API_KEY
 
 # Start server
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
-### 6.2 Default Model
+### 6.3 Runtime Modes
 
-The review generator uses `gemini-3.5-flash` by default. Override with:
+Environment variables:
 
-```bash
-echo "GEMINI_MODEL=gemini-2.5-flash" >> .env
-```
+- `GEMINI_API_KEY`: optional. If set, Volt attempts LLM review generation.
+- `GEMINI_MODEL`: optional model override. Defaults to `gemini-1.5-flash`.
+- `VOLT_ENABLE_LLM`: set to `false` to force deterministic review generation.
+- `VOLT_HEURISTIC_FALLBACK`: defaults to `true`; keep this enabled for judging unless the trained `.pkl` artifacts and catalog are mounted into the container.
 
-### 6.3 Task A: Generate Review
+### 6.4 Task A: Generate Review
 
 Predicts a rating, runs counterfactual sensitivity analysis, and generates a natural-language review.
 
@@ -325,6 +345,21 @@ curl -X POST http://localhost:8000/task-a/generate-review \
   }'
 ```
 
+The endpoint also accepts simpler judge-friendly payloads:
+
+```bash
+curl -X POST http://localhost:8000/generate-review \
+  -H "Content-Type: application/json" \
+  -d '{
+    "persona": "A Nigerian student who is budget conscious, picky about durability, and writes direct reviews.",
+    "product": {
+      "name": "20,000mAh power bank",
+      "category": "Electronics",
+      "description": "Affordable fast-charge power bank with strong battery backup."
+    }
+  }'
+```
+
 **Example response** (edited for brevity):
 ```json
 {
@@ -343,9 +378,9 @@ curl -X POST http://localhost:8000/task-a/generate-review \
 }
 ```
 
-The system predicts 3.0 (not 5.0) because the model detects negative signals in `product_text` ("battery drains", "scratch") and the low `quality_signal` (0.3) + negative `service_signal` (-0.5) push the classifier confidence above the override threshold.
+The system predicts 3.0 (not 5.0) because it detects negative signals in `product_text` ("battery drains", "scratch") and the low `quality_signal` (0.3) + negative `service_signal` (-0.5) push the low-rating logic.
 
-### 6.4 Task B: Recommend Products
+### 6.5 Task B: Recommend Products
 
 Scores all 1055 catalog products against a persona, ranks by predicted fit, and returns the top-K.
 
@@ -361,6 +396,17 @@ curl -X POST http://localhost:8000/task-b/recommend \
       "tone": 2,
       "review_length": 50
     },
+    "top_k": 5
+  }'
+```
+
+Simpler payload:
+
+```bash
+curl -X POST http://localhost:8000/recommend \
+  -H "Content-Type: application/json" \
+  -d '{
+    "persona": "A budget-conscious student who needs durable electronics and reliable delivery.",
     "top_k": 5
   }'
 ```
@@ -395,24 +441,9 @@ curl -X POST http://localhost:8000/task-b/recommend \
 
 Each result includes the predicted rating, a ranker score (how well the product matches the persona), `regret_risk` and `robustness` from the counterfactual analysis, and a combined `final_score` that weights all signals. The top-ranked product — a toy for a grandson — scores highest for a persona with high quality and budget sensitivity because its reviews emphasise build quality and value at a reasonable price point.
 
-**Performance note**: The endpoint processes all 1055 catalog products in approximately 2.3 minutes using a two-phase scoring strategy. In Phase 1, every product receives a quick evaluation (rating prediction + ranker score, ~38ms each). In Phase 2, only the top 200 candidates — where the extra analysis actually affects the final ranking — undergo the full 6-evaluation counterfactual analysis. The work is spread across 8 parallel threads. This cut response time from the original 6–9 minutes by roughly 75%. Think of it as pre-screening every applicant with a quick eligibility check before running the full background check on the most promising candidates.
-
-### 6.5 Health Check
-
-```bash
-curl http://localhost:8000/health
-# {"status":"ok"}
-```
-
 ### 6.6 Performance Optimisations
 
-The initial v1 implementation scored every product sequentially with all 6 model evaluations — a brute-force approach that took 6–9 minutes. Three optimisations brought this down to ~2.3 minutes:
-
-1. **VADER caching** — The sentiment analyser (`SentimentIntensityAnalyzer`) was reinitialised for every single product, repeatedly parsing its lexicon file from disk (53% of per-call time). Moving it to a once-per-process singleton cut each evaluation from 159ms to 38ms, a 4× improvement per call. In plain terms: instead of loading the dictionary of emotional words from scratch for each product, the system loads it once and reuses it.
-
-2. **Two-phase scoring** — Instead of running all 6 evaluations (rating + ranker + 4 counterfactuals) on every product, Phase 1 scores everything with just rating and ranker (2 calls, ~38ms each). Only the top 200 candidates proceed to Phase 2, which runs the full counterfactual suite. This reduces total model invocations from 6,330 to about 3,310. Think of it as a tournament: the first round quickly ranks all contestants, and only the top contenders get a detailed interview.
-
-3. **Parallel execution** — Both phases distribute work across 8 worker threads via `ThreadPoolExecutor`. Since each product is scored independently, processing them in parallel provides roughly a 2.5× speedup over sequential evaluation (limited by CPython's global interpreter lock and string-processing overhead). This is like having 8 cashiers serving customers instead of 1.
+With trained artifacts, the endpoint scores the full catalog using a two-phase strategy. Phase 1 quickly evaluates every product with rating prediction + ranker score. Phase 2 runs counterfactual analysis only on the top candidates where the extra analysis can affect the final ranking. Both phases use 8 worker threads. If the trained catalog is not mounted, the container uses a small built-in cross-domain catalog so judges get a fast response immediately.
 
 ---
 

@@ -102,6 +102,22 @@ class ApiSmokeTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["predicted_rating"], 4.2)
 
+    def test_generate_review_accepts_simple_payload(self):
+        response = self.client.post(
+            "/generate-review",
+            json={
+                "persona": "Budget conscious Nigerian student who values durability",
+                "product": {
+                    "name": "20,000mAh power bank",
+                    "category": "Electronics",
+                    "description": "Affordable power bank with strong battery backup.",
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["generated_review"]["rating"], 4.0)
+
     def test_recommend(self):
         response = self.client.post(
             "/task-b/recommend",
@@ -111,6 +127,18 @@ class ApiSmokeTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["recommendations"][0]["product_id"], "prod_1")
         self.assertEqual(response.json()["recommendations"][0]["category"], "Electronics")
+
+    def test_recommend_accepts_simple_payload(self):
+        response = self.client.post(
+            "/recommend",
+            json={
+                "persona": "Budget conscious student who needs durable electronics",
+                "top_k": 1,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["recommendations"][0]["product_id"], "prod_1")
 
 
 if __name__ == "__main__":
