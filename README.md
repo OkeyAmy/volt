@@ -35,7 +35,7 @@ This two-stage design treats class imbalance as an architectural problem rather 
 
 ### 2.1 Source
 
-We use the [Amazon Reviews dataset](https://huggingface.co/datasets/GonzaloA/amazon_reviews) from Hugging Face. The raw dataset contains 1497 rows with the following fields:
+We use the [Amazon Reviews dataset](https://huggingface.co/datasets/XANJEEV/amazon-product-reviews/) from Hugging Face. The raw dataset contains 1497 rows with the following fields:
 
 | Field | Description |
 |---|---|
