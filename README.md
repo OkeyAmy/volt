@@ -8,6 +8,9 @@
 
 We address the problem of predicting 1–5 star ratings from Amazon product reviews using a two-stage architecture that decouples continuous regression from low-rating classification. A RidgeCV regressor (Stage 1) predicts a fine-grained rating, then a LogisticRegression classifier with class-weight balancing (Stage 2) detects low-rated reviews and applies a hard cap-at-3 override. This decoupling yields a 74.5% test accuracy — an 11-point improvement over the best single-stage regressor (63.8%) — by solving the fundamental class imbalance problem (the dataset is 80% 5-star) without resampling or synthetic data. We exhaustively evaluate 28 alternative configurations (target encoding, transforms, calibration, hyperparameter sweeps, three-tier caps, soft blending, RandomForest) and find that none improve over the baseline two-stage design. The model reaches a practical ceiling at 79.0% theoretical maximum, bounded by the available 122 low-rated training examples (23 one-star, 17 two-star, 82 three-star from 1352 total reviews). We conclude that architectural decoupling of imbalanced subproblems is more effective than feature engineering or hyperparameter tuning for this class of ordinal rating prediction.
 
+
+> Collab Link:[Training](https://colab.research.google.com/drive/19YRJt6FyjecmLSpiemSdRRhXqTGKC_4B?usp=sharing)
+
 ---
 
 ## 1. Introduction
